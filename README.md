@@ -1,167 +1,70 @@
-* Face Recognition & Face Locking System
+```markdown
+# Face Lock & Behavior Tracker  
+**ArcFace ONNX + MediaPipe 5-Point + Identity Locking**
 
-(5-Point Landmark + ArcFace ONNX + Behavior Tracking)
+A lightweight, CPU-only system that goes beyond face recognition:  
+it locks onto one person and tracks their basic behavior over time.
 
- *Overview*
+## Key Features
 
-This project implements a CPU-friendly multi-face recognition and tracking system using OpenCV, MediaPipe FaceMesh, and ArcFace ONNX embeddings.
+- Enroll users with multiple face samples  
+- Real-time multi-face recognition  
+- **Face Lock** mode — tracks only the selected identity  
+- Detects simple actions: blink 😐 • smile 😊 • look left/right  
+- Automatically logs timestamped behavior history
 
-It supports:
+## Quick Start
 
-✔ Enrollment of new users
-✔ Real-time multi-face recognition
-✔ Face Locking (identity-based tracking)
-✔ Detection of simple facial actions
-✔ Logging a timeline of user actions
+```bash
+# Step 1: Enroll faces (more samples = better accuracy)
+python -m src.enroll
+# SPACE = capture  |  a = auto-capture  |  s = save  |  q = quit
 
-The system moves beyond recognition and into behavior tracking over time.
+# Step 2: Test basic recognition
+python -m src.recognize
+# + / - = threshold  |  d = debug overlay  |  q = quit
 
-* Full Processing Pipeline
+# Step 3: Run Face Lock + behavior tracking
+python main_lock.py
+```
 
-Camera → Haar Face Detection → FaceMesh 5-Point Landmarks → Face Alignment (112×112) → ArcFace ONNX Embedding → Cosine Similarity Matching → Face Locking → Action Detection → History Logging
+## Requirements
 
-*Requirements*
-
-Python 3.12
-
-opencv-python
-
-numpy
-
-onnxruntime
-
-mediapipe
-
-Install dependencies:
-
+```bash
 pip install opencv-python numpy onnxruntime mediapipe
+```
 
-* Project Structure
+Place `embedder_arcface.onnx` inside the `models/` folder.
+
+## How Face Lock Works
+
+1. Recognizes people normally  
+2. You choose/lock one identity  
+3. Switches to **Locked Mode** — ignores everyone else  
+4. Keeps tracking even during short recognition drops  
+5. Shows detected actions live  
+6. Saves timeline → `data/<name>_history_YYYYMMDD_HHMMSS.txt`
+
+Example log:
+```
+2025-10-15 14:32:07    BLINK      Eye aspect ratio < 0.22
+2025-10-15 14:32:11    HEAD_LEFT  Nose moved -22 px
+2025-10-15 14:32:18    SMILE      Mouth corners raised
+```
+
+## Folder Structure
+
+```
 face-recognition-5pt/
-│
-├─ data/
-│ ├─ enroll/                # Raw enrollment images
-│ └─ db/                    # Face embedding database (face_db.npz)
-│
-├─ models/
-│ └─ embedder_arcface.onnx  # ArcFace ONNX embedding model
-│
-├─ src/
-│ ├─ camera.py
-│ ├─ detect.py
-│ ├─ landmarks.py
-│ ├─ align.py
-│ ├─ embed.py
-│ ├─ enroll.py
-│ ├─ recognize.py           # Multi-face recognition
-│ ├─ evaluate.py
-│ ├─ haar_5pt.py
-│ │
-│ ├─ config.py              # 🔒 Face Lock settings
-│ ├─ face_lock.py           # 🔒 Locking & tracking logic
-│ ├─ action_detection.py    # 😊 Blink, smile, head movement detection
-│ └─ history_logger.py      # 📝 Action history recording
-│
-├─ main_lock.py             # 🚀 Face Locking system runner
-└─ README.md
+├── data/
+│   ├── enroll/           ← put enrollment photos here
+│   └── db/               ← face_db.npz (auto-created)
+├── models/
+│   └── embedder_arcface.onnx
+├── src/                  ← all logic modules
+└── main_lock.py          ← main Face Lock application
+```
 
-* PART 1 — FACE ENROLLMENT
-Run enrollment:
-py -3.12 -m src.enroll
+Simple. Fast. No GPU. Just a webcam. 🚀
+```
 
-Controls:
-Key	Action
-SPACE	Capture current frame
-a	Auto-capture multiple frames
-s	Save captured embeddings
-r	Reset current session
-q	Quit
-
-Faces are aligned using 5-point landmarks and converted into ArcFace embeddings stored in:
-
-data/db/face_db.npz
-
-
-More samples = better recognition.
-
-* PART 2 — FACE RECOGNITION
-Run recognition:
-py -3.12 -m src.recognize
-
-
-System detects multiple faces and identifies them in real time.
-
-Controls:
-Key	Action
-q	Quit
-r	Reload database
-+/-	Adjust recognition threshold
-d	Toggle debug overlay
-
-Matching uses cosine distance:
-
-distance = 1 - cosine_similarity(embedding, db_embedding)
-
-
-
-* PART 3 — FACE LOCKING & BEHAVIOR TRACKING
-
-This extends recognition into identity-based tracking over time.
-
-Run Face Locking System:
-py -3.12 main_lock.py
-
- What Face Locking Does
-
-When the selected identity appears:
-
-1️⃣ The system recognizes the person
-2️⃣ It locks onto that identity
-3️⃣ It tracks that same face across frames
-4️⃣ It ignores other faces
-5️⃣ It detects simple facial actions
-6️⃣ It records a timeline of actions to a file
-
-* Locking Behavior
-
-The system uses a state-based lock mechanism:
-
-* State	Description
- Recognition Mode	All faces are analyzed normally
- Locked Mode	Only the selected identity is tracked
-
-The lock remains active even if recognition briefly fails, and only releases if the face disappears for several frames.
-
-* Detected Actions (While Locked)
-Action	How It’s Detected
-Move Left	Nose X coordinate decreases
-Move Right	Nose X coordinate increases
-Blink	Eye landmark vertical distance shrinks
-Smile	Mouth corner distance increases
-
-These are simple, explainable heuristics — high precision is not required.
-
-* Action History Recording
-
-When a face is locked, a history file is created automatically:
-
-<name>_history_<timestamp>.txt
-
-Each entry contains:
-
-Timestamp
-
-Action type
-
-Description (if needed)
-
-This demonstrates behavior tracking over time.
-
-
-*  Final Result
-
-This project demonstrates the transition from:
-
-Face Recognition → Intelligent Face Tracking System
-
-It not only identifies a person, but also follows their behavior over time and logs
