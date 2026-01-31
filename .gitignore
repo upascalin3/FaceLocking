@@ -1,0 +1,13 @@
+models/embedder_arcface.onnx
+*_history_*.txt
+# Ignore everything inside db and enroll
+data/db/*
+data/enroll/*
+
+# But keep the folders tracked
+!data/db/.gitkeep
+!data/enroll/.gitkeep
+
+__pycache__/
+*.pyc
+
