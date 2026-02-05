@@ -5,11 +5,12 @@ from src.action_detection import *
 from src.history_logger import HistoryLogger
 
 from src.recognize import recognize_faces   # your existing function
+from src.camera import open_video_capture
 
 face_lock = FaceLock(TARGET_IDENTITY, MAX_LOST_FRAMES)
 logger = None
 
-cap = cv2.VideoCapture(0)
+cap = open_video_capture()
 
 while True:
     ret, frame = cap.read()

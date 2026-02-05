@@ -67,4 +67,3 @@ face-recognition-5pt/
 
 Simple. Fast. No GPU. Just a webcam. 🚀
 ```
-

@@ -1,18 +1,16 @@
 # src/align.py
 """
-Align faces using 5-point landmarks.
-
-Notes:
-- Uses Haar + 5pt landmarks detector
-- Keeps last aligned face to avoid flicker
-- Saves aligned images on key press
+Alignment demo using your WORKING pipeline:
+- Haar face detection (fast)
+- MediaPipe FaceMesh -> 5 keypoints (stable)
+- ArcFace-style 5pt alignment -> 112x112 (or any size you set)
 
 Run:
-    python -m src.align
+python -m src.align
 
 Keys:
-    q : quit
-    s : save current aligned face to data/debug_aligned/<timestamp>.jpg
+q quit
+s save current aligned face to data/debug_aligned/<timestamp>.jpg
 """
 
 from __future__ import annotations
@@ -20,22 +18,18 @@ from __future__ import annotations
 import time
 from pathlib import Path
 from typing import Tuple
-import os
 
 import cv2
 import numpy as np
 
 # Import from your existing script
 from .haar_5pt import Haar5ptDetector, align_face_5pt
+from .camera import open_video_capture
 
 
-def _put_text(
-    img,
-    text: str,
-    xy=(10, 30),
-    scale=0.8,
-    thickness=2,
-):
+
+
+def _put_text(img, text: str, xy=(10, 30), scale=0.8, thickness=2):
     cv2.putText(
         img,
         text,
@@ -59,7 +53,8 @@ def main(
     out_size: Tuple[int, int] = (112, 112),
     mirror: bool = True,
 ):
-    cap = cv2.VideoCapture(cam_index)
+    # Respect cam_index param by passing it to our helper
+    cap = open_video_capture(device=str(cam_index))
 
     det = Haar5ptDetector(
         min_size=(70, 70),
@@ -75,6 +70,7 @@ def main(
     save_dir.mkdir(parents=True, exist_ok=True)
 
     last_aligned = blank.copy()
+
     fps_t0 = time.time()
     fps_n = 0
     fps = 0.0
@@ -90,14 +86,13 @@ def main(
             frame = cv2.flip(frame, 1)
 
         faces = det.detect(frame, max_faces=1)
-
         vis = frame.copy()
         aligned = None
 
         if faces:
             f = faces[0]
 
-            # Draw box + 5 keypoints
+            # Draw box + 5 pts
             cv2.rectangle(
                 vis,
                 (f.x1, f.y1),
@@ -107,42 +102,24 @@ def main(
             )
 
             for (x, y) in f.kps.astype(int):
-                cv2.circle(
-                    vis,
-                    (int(x), int(y)),
-                    3,
-                    (0, 255, 0),
-                    -1,
-                )
+                cv2.circle(vis, (int(x), int(y)), 3, (0, 255, 0), -1)
 
-            # Align (main purpose)
+            # Align (core step)
             aligned, _M = align_face_5pt(
                 frame,
                 f.kps,
                 out_size=out_size,
             )
 
-            # Keep last valid aligned face
+            # Keep last good aligned
             if aligned is not None and aligned.size:
                 last_aligned = aligned
 
-            _put_text(
-                vis,
-                "OK  (Haar + FaceMesh 5pt)",
-                (10, 30),
-                0.75,
-                2,
-            )
+            _put_text(vis, "OK (Haar + FaceMesh 5pt)", (10, 30), 0.75, 2)
         else:
-            _put_text(
-                vis,
-                "no face",
-                (10, 30),
-                0.9,
-                2,
-            )
+            _put_text(vis, "no face", (10, 30), 0.9, 2)
 
-        # FPS calculation
+        # FPS
         fps_n += 1
         dt = time.time() - fps_t0
         if dt >= 1.0:
@@ -151,13 +128,7 @@ def main(
             fps_t0 = time.time()
 
         _put_text(vis, f"FPS: {fps:.1f}", (10, 60), 0.75, 2)
-        _put_text(
-            vis,
-            f"warp: 5pt -> {out_w}x{out_h}",
-            (10, 90),
-            0.75,
-            2,
-        )
+        _put_text(vis, f"warp: 5pt -> {out_w}x{out_h}", (10, 90), 0.75, 2)
 
         _safe_imshow("align - camera", vis)
         _safe_imshow("align - aligned", last_aligned)

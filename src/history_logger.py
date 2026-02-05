@@ -1,13 +1,14 @@
+import os
 from datetime import datetime
 
-class HistoryLogger:
-    def __init__(self, identity):
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        filename = f"{identity.lower()}_history_{timestamp}.txt"
-        self.file = open(filename, "w")
-        print(f"[HISTORY FILE CREATED] {filename}")
+def start_history(face_name):
+    os.makedirs("history", exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    filename = f"{face_name}_history_{timestamp}.txt"
+    return open(os.path.join("history", filename), "a")
 
-    def log(self, action, description=""):
-        time_now = datetime.now().strftime("%H:%M:%S")
-        self.file.write(f"{time_now} | {action} | {description}\n")
-        self.file.flush()
+
+def log_action(file, action, details=""):
+    time = datetime.now().strftime("%H:%M:%S")
+    file.write(f"[{time}] {action} {details}\n")
+    file.flush()

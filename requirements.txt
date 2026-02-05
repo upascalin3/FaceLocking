@@ -1,0 +1,7 @@
+opencv-python
+onnxruntime
+mediapipe==0.10.21
+numpy
+
+# Optional (if you don't need GUI features in headless environments):
+# opencv-python-headless

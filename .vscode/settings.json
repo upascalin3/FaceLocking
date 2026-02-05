@@ -1,0 +1,11 @@
+{
+  // Help Pylance resolve imports from the workspace
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}",
+    "${workspaceFolder}/src"
+  ],
+  // Use the .env file we added so PYTHONPATH is set for the debugger/extension
+  "python.envFile": "${workspaceFolder}/.env",
+  // Optional: silence some missing import noise until packages are installed
+  // "python.analysis.diagnosticSeverityOverrides": { "reportMissingImports": "warning" }
+}
